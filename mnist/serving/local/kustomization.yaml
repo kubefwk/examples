@@ -1,8 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-bases:
-- ../base
+generatorOptions:
+  disableNameSuffixHash: true
 
 vars:
 - fieldref:
@@ -29,4 +29,16 @@ patchesJson6902:
     group: extensions
     kind: Deployment
     name: $(svcName)
+    namespace: kubeflow
     version: v1beta1
+
+resources:
+- ../base
+
+configMapGenerator:
+- literals:
+  - name=mnist-service-local
+  - pvcName=local
+  - pvcMountPath=/mnt
+  - modelBasePath=/mnt/export
+  name: mnist-map-serving

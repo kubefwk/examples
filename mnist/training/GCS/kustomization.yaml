@@ -1,8 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-bases:
-- ../base
+generatorOptions:
+  disableNameSuffixHash: true
 
 configurations:
 - params.yaml
@@ -38,11 +38,42 @@ vars:
     apiVersion: v1
     kind: ConfigMap
     name: mnist-map-training
-
+      
 patchesJson6902:
+- path: Worker_patch.yaml
+  target:
+    group: kubeflow.org
+    kind: TFJob
+    name: $(trainingName)
+    namespace: kubeflow
+    version: v1beta2
+- path: Ps_patch.yaml
+  target:
+    group: kubeflow.org
+    kind: TFJob
+    name: $(trainingName)
+    namespace: kubeflow
+    version: v1beta2
 - path: Chief_patch.yaml
   target:
     group: kubeflow.org
     kind: TFJob
     name: $(trainingName)
+    namespace: kubeflow
     version: v1beta2
+
+resources:
+- ../base
+
+configMapGenerator:
+- literals:
+  - name=mnist-train-dist
+  - trainSteps=200
+  - batchSize=100
+  - learningRate=0.01
+  - modelDir=gs://my-bucket/my-model
+  - exportDir=gs://my-bucket/my-model/export
+  - secretName=user-gcp-sa
+  - secretMountPath=/var/secrets
+  - GOOGLE_APPLICATION_CREDENTIALS=/var/secrets/user-gcp-sa.json
+  name: mnist-map-training

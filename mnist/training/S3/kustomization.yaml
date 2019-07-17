@@ -1,8 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-bases:
-- ../base
+generatorOptions:
+  disableNameSuffixHash: true
 
 configurations:
 - params.yaml
@@ -80,11 +80,56 @@ vars:
     apiVersion: v1
     kind: ConfigMap
     name: mnist-map-training
-
+      
 patchesJson6902:
+- path: Worker_patch.yaml
+  target:
+    group: kubeflow.org
+    kind: TFJob
+    name: $(trainingName)
+    namespace: kubeflow
+    version: v1beta2
+- path: Ps_patch.yaml
+  target:
+    group: kubeflow.org
+    kind: TFJob
+    name: $(trainingName)
+    namespace: kubeflow
+    version: v1beta2
 - path: Chief_patch.yaml
   target:
     group: kubeflow.org
     kind: TFJob
     name: $(trainingName)
+    namespace: kubeflow
     version: v1beta2
+
+resources:
+- ../base
+
+configMapGenerator:
+- literals:
+  - name=mnist-train-dist
+  - trainSteps=200
+  - batchSize=100
+  - learningRate=0.01
+  - modelDir=s3://path
+  - exportDir=s3://export
+  - awsSecretName=aws-creds
+  - awsAccessKeyIDName=awsAccessKeyID
+  - awsSecretAccessKeyName=awsSecretAccessKey
+  - S3_ENDPOINT=s3.us-west-2.amazonaws.com
+  - AWS_ENDPOINT_URL=https://s3.us-west-2.amazonaws.com
+  - AWS_REGION=us-west-2
+  - BUCKET_NAME=mybucket
+  - S3_USE_HTTPS=1
+  - S3_VERIFY_SSL=1
+  name: mnist-map-training
+
+secretGenerator:
+- literals:
+  - awsAccessKeyID=xxxxx
+  - awsSecretAccessKey=xxxxx
+  name: aws-creds
+  namespace: kubeflow
+  type: Opaque

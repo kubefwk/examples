@@ -1,8 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-bases:
-- ../base
+generatorOptions:
+  disableNameSuffixHash: true
 
 configurations:
 - params.yaml
@@ -36,4 +36,18 @@ patchesJson6902:
     group: apps
     kind: Deployment
     name: tensorboard-tb
+    namespace: kubeflow
     version: v1beta1
+
+resources:
+- ../base
+
+configMapGenerator:
+- literals:
+  - name=mnist-gcs-dist
+  - exportDir=gs://my-bucket/my-model/export
+  - logDir=/tmp
+  - secretName=user-gcp-sa
+  - secretMountPath=/var/secrets
+  - GOOGLE_APPLICATION_CREDENTIALS=/var/secrets/user-gcp-sa.json
+  name: mnist-map-monitoring

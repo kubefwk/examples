@@ -1,8 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-bases:
-- ../base
+generatorOptions:
+  disableNameSuffixHash: true
 
 configurations:
 - params.yaml
@@ -31,11 +31,41 @@ vars:
     apiVersion: v1
     kind: ConfigMap
     name: mnist-map-training
-    
+      
 patchesJson6902:
+- path: Worker_patch.yaml
+  target:
+    group: kubeflow.org
+    kind: TFJob
+    name: $(trainingName)
+    namespace: kubeflow
+    version: v1beta2
+- path: Ps_patch.yaml
+  target:
+    group: kubeflow.org
+    kind: TFJob
+    name: $(trainingName)
+    namespace: kubeflow
+    version: v1beta2
 - path: Chief_patch.yaml
   target:
     group: kubeflow.org
     kind: TFJob
     name: $(trainingName)
+    namespace: kubeflow
     version: v1beta2
+
+resources:
+- ../base
+
+configMapGenerator:
+- literals:
+  - name=mnist-train-local
+  - trainSteps=200
+  - batchSize=100
+  - learningRate=0.01
+  - pvcName=local
+  - pvcMountPath=/mnt
+  - modelDir=/mnt
+  - exportDir=/mnt/export
+  name: mnist-map-training

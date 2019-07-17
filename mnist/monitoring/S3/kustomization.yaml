@@ -1,8 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-bases:
-- ../base
+generatorOptions:
+  disableNameSuffixHash: true
 
 configurations:
 - params.yaml
@@ -78,4 +78,22 @@ patchesJson6902:
     group: apps
     kind: Deployment
     name: tensorboard-tb
+    namespace: kubeflow
     version: v1beta1
+
+resources:
+- ../base
+
+configMapGenerator:
+- literals:
+  - logDir=/tmp
+  - awsSecretName=aws-creds
+  - awsAccessKeyIDName=awsAccessKeyID
+  - awsSecretAccessKeyName=awsSecretAccessKey
+  - S3_ENDPOINT=s3.us-west-2.amazonaws.com
+  - AWS_ENDPOINT_URL=https://s3.us-west-2.amazonaws.com
+  - AWS_REGION=us-west-2
+  - BUCKET_NAME=mybucket
+  - S3_USE_HTTPS=1
+  - S3_VERIFY_SSL=1
+  name: mnist-map-monitoring
